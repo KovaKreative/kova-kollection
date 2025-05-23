@@ -6,10 +6,95 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
+  // output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Movie {
+  id          String        @id @default(uuid())
+  title       String
+  year        Int
+  watched     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Foreign keys
+  franchise   Franchise?    @relation(fields: [franchiseId], references: [id])
+  franchiseId String?
+
+  director    Person?       @relation("DirectedBy", fields: [directorId], references: [id])
+  directorId  String?
+
+  // Relations
+  genres      MovieGenre[]
+  formats     MovieFormat[]
+  cast        MovieCast[]
+  crew        MovieCrew[]
+}
+
+model Franchise {
+  id    String   @id @default(uuid())
+  name  String   @unique
+  movies Movie[]
+}
+
+model Genre {
+  id    String        @id @default(uuid())
+  name  String        @unique
+  movies MovieGenre[]
+}
+
+model Format {
+  id    String         @id @default(uuid())
+  name  String         @unique
+  movies MovieFormat[]
+}
+
+model Person {
+  id     String       @id @default(uuid())
+  name   String       @unique
+  // Note: could be cast, crew, director, etc.
+  castIn   MovieCast[]
+  crewOn   MovieCrew[]
+  directed Movie[]     @relation("DirectedBy")
+}
+
+model MovieGenre {
+  movieId String
+  genreId String
+  movie   Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, genreId])
+}
+
+model MovieFormat {
+  movieId String
+  formatId String
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  format  Format @relation(fields: [formatId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, formatId])
+}
+
+model MovieCast {
+  movieId  String
+  personId String
+  movie    Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, personId])
+}
+
+model MovieCrew {
+  movieId  String
+  personId String
+  movie    Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, personId])
 }
